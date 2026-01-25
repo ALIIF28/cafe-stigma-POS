@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Barista - Cafe Stigma</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        stigma: {
+                            base: '#F7F5F0',    /* Cream Background */
+                            green: '#2A5C35',   /* Hijau Utama */
+                            dark: '#1A3C22',    /* Hijau Gelap (Sidebar) */
+                            light: '#E8F5E9'    /* Hijau Muda */
+                        }
+                    },
+                    fontFamily: { sans: ['DM Sans', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        /* Hilangkan scrollbar tapi tetap bisa scroll */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animasi Fade In */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-100 text-stigma-dark font-sans h-screen overflow-hidden flex selection:bg-stigma-green selection:text-white">
+
+    <aside class="w-24 bg-stigma-dark flex flex-col items-center py-6 z-20 shadow-2xl flex-shrink-0">
+        <div class="mb-8 p-3 bg-white/10 rounded-2xl">
+            <i class="ri-cup-line text-2xl text-white"></i>
+        </div>
+        
+        <nav class="flex-1 space-y-6 w-full px-4 flex flex-col items-center">
+            
+            <button onclick="switchView('pos')" id="nav-pos" class="nav-btn w-14 h-14 rounded-2xl bg-stigma-green text-white shadow-lg shadow-green-900/20 flex items-center justify-center transition hover:scale-105">
+                <i class="ri-store-2-line text-2xl"></i>
+            </button>
+            
+            <button onclick="switchView('history')" id="nav-history" class="nav-btn w-14 h-14 rounded-2xl text-gray-400 hover:bg-white/10 hover:text-white transition flex items-center justify-center">
+                <i class="ri-history-line text-2xl"></i>
+            </button>
+            
+            <button onclick="alert('Akses Laporan hanya untuk Owner.')" class="w-14 h-14 rounded-2xl text-gray-500 hover:text-gray-400 cursor-not-allowed flex items-center justify-center opacity-50">
+                <i class="ri-pie-chart-line text-2xl"></i>
+            </button>
+            
+            <button onclick="switchView('settings')" id="nav-settings" class="nav-btn w-14 h-14 rounded-2xl text-gray-400 hover:bg-white/10 hover:text-white transition flex items-center justify-center">
+                <i class="ri-settings-4-line text-2xl"></i>
+            </button>
+        </nav>
+
+        <button onclick="logout()" class="mt-auto text-red-400 hover:text-red-200 p-4 transition bg-white/5 rounded-2xl hover:bg-white/10" title="Keluar">
+            <i class="ri-logout-box-line text-2xl"></i>
+        </button>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative bg-stigma-base">
+        
+        <header class="h-24 px-8 flex justify-between items-center shrink-0">
+            <div>
+                <h1 class="text-3xl font-bold text-stigma-dark tracking-tight" id="pageTitle">Menu Pesanan</h1>
+                <p class="text-sm text-gray-500 font-medium mt-1 flex items-center gap-2">
+                    <i class="ri-calendar-line"></i> <span id="currentDate">loading...</span>
+                </p>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div id="searchWrapper" class="bg-white px-5 py-3 rounded-2xl flex items-center space-x-3 w-80 shadow-sm border border-transparent focus-within:border-stigma-green transition">
+                    <i class="ri-search-line text-gray-400 text-lg"></i>
+                    <input type="text" id="searchInput" placeholder="Cari menu apa hari ini?" class="bg-transparent outline-none text-sm w-full placeholder-gray-400 font-medium text-stigma-dark">
+                </div>
+                
+                <div class="flex items-center space-x-4 pl-6 border-l border-gray-200/50">
+                    <div class="text-right hidden sm:block leading-tight">
+                        <p class="text-sm font-bold text-stigma-dark">Barista</p>
+                        <p class="text-xs text-green-600 font-bold bg-green-100 px-2 py-0.5 rounded-full inline-block mt-0.5">Online</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-stigma-dark text-white flex items-center justify-center font-bold shadow-lg border-2 border-white text-lg">B</div>
+                </div>
+            </div>
+        </header>
+
+        <div id="view-pos" class="flex-1 flex flex-col overflow-hidden view-section animate-fade">
+            <div class="px-8 pb-6 shrink-0">
+                <div class="flex space-x-3 overflow-x-auto pb-2 hide-scroll" id="categoryContainer">
+                    <button data-cat="all" class="cat-btn active px-6 py-3 rounded-2xl bg-stigma-green text-white text-sm font-bold shadow-lg shadow-stigma-green/30 transition hover:-translate-y-1">Semua Menu</button>
+                    <button data-cat="coffee" class="cat-btn px-6 py-3 rounded-2xl bg-white text-gray-500 hover:text-stigma-green text-sm font-bold transition hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100">Coffee</button>
+                    <button data-cat="non-coffee" class="cat-btn px-6 py-3 rounded-2xl bg-white text-gray-500 hover:text-stigma-green text-sm font-bold transition hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100">Non-Coffee</button>
+                    <button data-cat="pastry" class="cat-btn px-6 py-3 rounded-2xl bg-white text-gray-500 hover:text-stigma-green text-sm font-bold transition hover:bg-white hover:shadow-md border border-transparent hover:border-gray-100">Pastry</button>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-8 pb-32">
+                <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="productGrid">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-history" class="hidden flex-1 overflow-y-auto p-8 view-section animate-fade">
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="font-bold text-lg text-stigma-dark">Riwayat Transaksi Sesi Ini</h3>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-white text-gray-400 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
+                        <tr>
+                            <th class="p-5">ID TRX</th>
+                            <th class="p-5">Waktu</th>
+                            <th class="p-5">Detail Item</th>
+                            <th class="p-5">Total</th>
+                            <th class="p-5">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="text-sm text-gray-700 divide-y divide-gray-50">
+                        <tr>
+                            <td colspan="5" class="p-10 text-center text-gray-400 flex flex-col items-center">
+                                <i class="ri-inbox-archive-line text-4xl mb-2"></i>
+                                Belum ada transaksi baru.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-settings" class="hidden flex-1 p-8 view-section animate-fade">
+            <div class="max-w-xl bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-xl mb-8 flex items-center gap-3">
+                    <span class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"><i class="ri-settings-4-line"></i></span>
+                    Pengaturan
+                </h3>
+                
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                        <div>
+                            <p class="font-bold text-stigma-dark">Printer Thermal</p>
+                            <p class="text-xs text-gray-500">Koneksi ke printer kasir</p>
+                        </div>
+                        <button class="px-5 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold shadow-sm hover:bg-gray-50" onclick="alert('Mencari printer...')">Test Print</button>
+                    </div>
+
+                    <div class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl">
+                        <div>
+                            <p class="font-bold text-stigma-dark">Suara Notifikasi</p>
+                            <p class="text-xs text-gray-500">Bunyi saat transaksi sukses</p>
+                        </div>
+                        <div class="w-12 h-6 bg-stigma-green rounded-full relative cursor-pointer">
+                            <div class="w-4 h-4 bg-white rounded-full absolute right-1 top-1 shadow-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-red-50 rounded-2xl cursor-pointer hover:bg-red-100 transition" onclick="logout()">
+                        <p class="font-bold text-red-500">Logout Akun</p>
+                        <p class="text-xs text-red-300">Keluar dari sesi kasir</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <aside id="cartSidebar" class="w-[400px] bg-white border-l border-gray-100 shadow-2xl flex flex-col h-screen z-10 flex-shrink-0 transition-all duration-300 relative">
+        <div class="p-8 pb-4 bg-white shrink-0 z-10">
+            <h2 class="text-2xl font-bold text-stigma-dark flex items-center gap-3">
+                Current Order
+                <span class="text-xs font-normal text-white bg-stigma-dark px-2 py-1 rounded-lg">#Active</span>
+            </h2>
+            <p class="text-xs text-gray-400 mt-2 font-mono tracking-wide" id="orderIdDisplay">ORDER ID: #STG-READY</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto px-6 space-y-4 bg-white" id="cartContainer">
+            <div id="emptyCartState" class="h-full flex flex-col items-center justify-center text-gray-400 opacity-50 pb-20">
+                <div class="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <i class="ri-shopping-bag-3-line text-5xl text-gray-300"></i>
+                </div>
+                <p class="font-medium">Keranjang Kosong</p>
+                <p class="text-xs mt-1">Pilih menu di sebelah kiri</p>
+            </div>
+        </div>
+
+        <div class="p-6 bg-white border-t border-gray-100 pb-8">
+            <div class="bg-gray-50 p-5 rounded-2xl mb-6 space-y-3">
+                <div class="flex justify-between text-sm text-gray-500">
+                    <span>Subtotal</span>
+                    <span class="font-bold text-stigma-dark" id="subtotalPrice">Rp 0</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-500">
+                    <span>Tax (10%)</span>
+                    <span class="font-bold text-stigma-dark" id="taxPrice">Rp 0</span>
+                </div>
+                <div class="border-t border-gray-200 my-2 pt-2 flex justify-between text-xl font-extrabold text-stigma-dark">
+                    <span>Total</span>
+                    <span class="text-stigma-green" id="totalPrice">Rp 0</span>
+                </div>
+            </div>
+            
+            <button id="btnCheckout" class="w-full py-4 bg-stigma-dark text-white rounded-2xl font-bold text-lg shadow-xl shadow-stigma-dark/20 hover:bg-stigma-green hover:shadow-stigma-green/30 hover:-translate-y-1 active:scale-95 transition-all flex justify-between px-8 items-center group">
+                <span>Proses Pembayaran</span>
+                <i class="ri-arrow-right-line group-hover:translate-x-1 transition"></i>
+            </button>
+        </div>
+    </aside>
+
+    <div id="successModal" class="fixed inset-0 bg-stigma-dark/90 z-50 hidden items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[2rem] p-10 max-w-sm w-full text-center shadow-2xl transform scale-90 transition-transform duration-300" id="modalContent">
+            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-[bounce_1s_infinite]">
+                <i class="ri-check-line text-5xl text-green-600"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-stigma-dark mb-2">Pembayaran Sukses!</h3>
+            <p class="text-gray-400 mb-8 text-sm leading-relaxed">Transaksi telah disimpan dan stok otomatis berkurang.</p>
+            
+            <div class="bg-gray-50 p-5 rounded-2xl mb-8 border border-dashed border-gray-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-500">Total Bayar</span>
+                    <span class="font-bold text-stigma-dark text-xl" id="modalTotal">Rp 0</span>
+                </div>
+            </div>
+
+            <button id="btnCloseModal" class="w-full py-4 bg-stigma-dark text-white rounded-xl font-bold hover:bg-gray-800 transition shadow-lg">
+                Transaksi Baru
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
+    <script>
+        // Cek login
+        checkAuth('barista');
+    </script>
+</body>
+</html>

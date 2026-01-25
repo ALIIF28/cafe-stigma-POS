@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Keuangan - Cafe Stigma</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: { stigma: { base: '#F7F5F0', green: '#2A5C35', dark: '#1A3C22' } }
+            }
+        }
+    }
+  </script>
+
+  <style>
+    @media print {
+        /* 1. Sembunyikan elemen yang tidak perlu dicetak */
+        aside, .no-print, #btn-print-wrapper, button, .view-section:not(#view-reports) {
+            display: none !important;
+        }
+
+        /* 2. Atur format halaman */
+        body {
+            background-color: white !important;
+            font-family: 'Times New Roman', Times, serif; /* Font formal untuk laporan */
+            color: black !important;
+            overflow: visible !important;
+        }
+
+        /* 3. Pastikan Tabel Laporan Muncul Sempurna */
+        #view-reports {
+            display: block !important;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 4. Styling Header Laporan (Kop Surat) */
+        .print-header {
+            display: flex !important; /* Munculkan saat print */
+            flex-direction: column;
+            align-items: center;
+            border-bottom: 2px solid black;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        
+        /* 5. Styling Tabel Print */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid black !important;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0 !important;
+            -webkit-print-color-adjust: exact; /* Agar warna background th tercetak */
+        }
+    }
+
+    /* Sembunyikan Kop Surat di tampilan layar biasa (Screen) */
+    .print-header {
+        display: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
+
+  <aside class="w-64 bg-stigma-dark text-white flex flex-col flex-shrink-0 transition-all duration-300">
+    <div class="p-6 flex items-center gap-3 border-b border-white/10">
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="ri-store-2-line text-xl"></i>
+        </div>
+        <div>
+            <h1 class="font-bold tracking-wide">OWNER</h1>
+            <p class="text-xs text-green-200">Panel Admin</p>
+        </div>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-2">
+        <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 bg-stigma-green rounded-xl transition text-left">
+            <i class="ri-dashboard-line"></i> Dashboard
+        </button>
+        <button onclick="switchView('inventory')" id="btn-inventory" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 rounded-xl transition text-left text-gray-300">
+            <i class="ri-archive-line"></i> Stok & Menu
+        </button>
+        <button onclick="switchView('reports')" id="btn-reports" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 rounded-xl transition text-left text-gray-300">
+            <i class="ri-file-list-3-line"></i> Laporan
+        </button>
+    </nav>
+
+    <div class="p-4 border-t border-white/10">
+        <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:text-red-300 transition">
+            <i class="ri-logout-box-line"></i> Logout
+        </button>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto bg-gray-100 p-8 relative">
+    
+    <div id="view-dashboard" class="view-section animate-fade">
+        <h2 class="text-2xl font-bold text-stigma-dark mb-6 border-l-4 border-stigma-green pl-4">Ringkasan Keuangan</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-green-500">
+                <h3 class="text-gray-500 text-xs font-bold uppercase mb-2">Pemasukan</h3>
+                <div class="text-3xl font-bold text-stigma-dark" id="val-in">Rp 0</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-red-500">
+                <h3 class="text-gray-500 text-xs font-bold uppercase mb-2">Pengeluaran</h3>
+                <div class="text-3xl font-bold text-stigma-dark" id="val-out">Rp 0</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-blue-500">
+                <h3 class="text-gray-500 text-xs font-bold uppercase mb-2">Profit Bersih</h3>
+                <div class="text-3xl font-bold text-blue-600" id="val-profit">Rp 0</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm">
+                <h3 class="font-bold text-stigma-dark mb-4">Grafik Pendapatan</h3>
+                <div class="relative h-64"><canvas id="chartFlow"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm">
+                <h3 class="font-bold text-stigma-dark mb-4">Kategori Terlaris</h3>
+                <div class="relative h-64"><canvas id="chartRatio"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-inventory" class="view-section hidden animate-fade">
+        <h2 class="text-2xl font-bold text-stigma-dark mb-6 border-l-4 border-stigma-green pl-4">Manajemen Stok & Menu</h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm h-fit">
+                <h3 class="font-bold text-lg mb-4 text-stigma-dark">Tambah Item Baru</h3>
+                <form onsubmit="handleAdProduct(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nama Produk / Bahan</label>
+                        <input type="text" id="inpName" required class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-stigma-green outline-none" placeholder="Cth: Kopi Gayo">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kategori</label>
+                            <select id="inpCat" class="w-full p-2 border rounded-lg outline-none">
+                                <option value="coffee">Coffee</option>
+                                <option value="non-coffee">Non-Coffee</option>
+                                <option value="pastry">Pastry</option>
+                                <option value="raw">Bahan Baku</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Stok</label>
+                            <input type="number" id="inpStock" required min="1" class="w-full p-2 border rounded-lg outline-none" placeholder="10">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Harga Jual (Rp)</label>
+                        <input type="number" id="inpPrice" required class="w-full p-2 border rounded-lg outline-none" placeholder="0 jika bahan">
+                    </div>
+                    <button type="submit" class="w-full bg-stigma-dark text-white py-3 rounded-xl font-bold hover:bg-stigma-green transition shadow-lg">Simpan Produk</button>
+                </form>
+            </div>
+
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-lg text-stigma-dark">Daftar Stok Saat Ini</h3>
+                    <span class="text-xs bg-gray-100 px-3 py-1 rounded-full" id="totalItemsBadge">0 Item</span>
+                </div>
+                <div class="overflow-y-auto max-h-[600px] p-0">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase sticky top-0">
+                            <tr>
+                                <th class="p-4">Produk</th>
+                                <th class="p-4">Kategori</th>
+                                <th class="p-4 text-center">Stok</th>
+                                <th class="p-4">Harga</th>
+                                <th class="p-4 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="text-sm text-gray-700 divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-reports" class="view-section hidden animate-fade">
+        
+        <div class="print-header text-center mb-8">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0;">CAFE STIGMA</h1>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Jl. Contoh No. 123, Kota Batam, Kepulauan Riau</p>
+            <p style="margin: 0; font-size: 14px;">Telp: 0812-3456-7890 | Email: admin@cafestigma.com</p>
+            <br>
+            <h2 style="font-size: 18px; font-weight: bold; text-decoration: underline;">LAPORAN TRANSAKSI PENJUALAN</h2>
+            <p id="printDateDisplay" style="font-size: 12px; margin-top: 5px;"></p>
+        </div>
+
+        <div class="flex justify-between items-center mb-6 no-print">
+            <h2 class="text-2xl font-bold text-stigma-dark border-l-4 border-stigma-green pl-4">Laporan Transaksi</h2>
+            <button onclick="handlePrint()" class="bg-stigma-dark text-white px-6 py-2 rounded-xl hover:bg-stigma-green flex items-center gap-2 shadow-lg transition">
+                <i class="ri-printer-line"></i> Cetak PDF / Print
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 print:shadow-none print:border-0">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600 text-xs uppercase border-b-2 border-gray-200">
+                    <tr>
+                        <th class="p-s4 border-r border-gray-100">Tanggal & Waktu</th>
+                        <th class="p-4 border-r border-gray-100">ID Transaksi</th>
+                        <th class="p-4 border-r border-gray-100 w-1/3">Detail Pesanan</th>
+                        <th class="p-4 border-r border-gray-100 text-center">Tipe</th>
+                        <th class="p-4 text-right">Nominal</th>
+                    </tr>
+                </thead>
+                <tbody id="reportTableBody" class="text-sm text-gray-700 divide-y divide-gray-100">
+                    </tbody>
+                <tfoot class="bg-gray-100 font-bold text-stigma-dark border-t-2 border-gray-300">
+                    <tr>
+                        <td colspan="4" class="p-4 text-right uppercase tracking-wider">Total Pendapatan Bersih:</td>
+                        <td class="p-4 text-right text-lg" id="reportTotalIncome">Rp 0</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="print-header" style="border: none; margin-top: 50px; page-break-inside: avoid;">
+            <div style="display: flex; justify-content: space-between; width: 100%;">
+                <div style="text-align: center; width: 200px;">
+                    <p>Disiapkan Oleh,</p>
+                    <br><br><br>
+                    <p>( ......................... )</p>
+                    <p>Admin / Barista</p>
+                </div>
+                <div style="text-align: center; width: 200px;">
+                    <p>Mengetahui,</p>
+                    <br><br><br>
+                    <p>( ......................... )</p>
+                    <p>Owner Cafe Stigma</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="owner.js"></script>
+  <script>
+    checkAuth('owner');
+
+    // Fungsi Print Khusus
+    function handlePrint() {
+        // Update tanggal cetak
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('printDateDisplay').innerText = "Dicetak pada: " + dateStr + " " + now.toLocaleTimeString('id-ID');
+        
+        // Panggil Print Bawaan Browser
+        window.print();
+    }
+  </script>
+</body>
+</html>
