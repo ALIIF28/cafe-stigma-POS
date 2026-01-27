@@ -11,7 +11,7 @@ function getTransactions() {
 
 // Helper: Ambil Data Produk (Untuk Cek Kategori)
 function getProducts() {
-    const stored = localStorage.getItem('stigma_products');
+    const stored = localStorage.getItem('stigma_products_v5');
     if (!stored) {
         // Data Default minimal agar tidak error jika localStorage kosong
         return [
@@ -25,35 +25,35 @@ function getProducts() {
 // 1. NAVIGASI VIEW
 function switchView(viewName) {
     document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-    
+
     document.querySelectorAll('.nav-item').forEach(btn => {
         btn.className = "nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 rounded-xl transition text-left text-gray-300";
     });
 
     const viewTarget = document.getElementById(`view-${viewName}`);
-    if(viewTarget) viewTarget.classList.remove('hidden');
-    
+    if (viewTarget) viewTarget.classList.remove('hidden');
+
     const activeBtn = document.getElementById(`btn-${viewName}`);
-    if(activeBtn) {
+    if (activeBtn) {
         activeBtn.className = "nav-item w-full flex items-center gap-3 px-4 py-3 bg-stigma-green text-white rounded-xl transition text-left shadow-lg";
     }
 
     // Refresh Data Sesuai Halaman
-    if(viewName === 'dashboard') calculateStats();
-    if(viewName === 'inventory') renderInventory();
-    if(viewName === 'reports') renderReports();
+    if (viewName === 'dashboard') calculateStats();
+    if (viewName === 'inventory') renderInventory();
+    if (viewName === 'reports') renderReports();
 }
 
 // 2. LOGIKA DASHBOARD & STATISTIK REAL-TIME
 function calculateStats() {
     const trxs = getTransactions();
     let income = 0;
-    
+
     // Hitung Total Pemasukan
     trxs.forEach(t => income += t.total);
 
     // Hitung Pengeluaran (Contoh statis, bisa dikembangkan nanti)
-    let expense = 500000; 
+    let expense = 500000;
     let profit = income - expense;
 
     // Render Angka ke Kartu
@@ -61,9 +61,9 @@ function calculateStats() {
     const elOut = document.getElementById('val-out');
     const elProf = document.getElementById('val-profit');
 
-    if(elIn) elIn.innerText = fmt(income);
-    if(elOut) elOut.innerText = fmt(expense);
-    if(elProf) {
+    if (elIn) elIn.innerText = fmt(income);
+    if (elOut) elOut.innerText = fmt(expense);
+    if (elProf) {
         elProf.innerText = fmt(profit);
         elProf.className = profit >= 0 ? "text-3xl font-bold text-blue-600" : "text-3xl font-bold text-red-500";
     }
@@ -76,12 +76,12 @@ function calculateStats() {
 // --- A. Update Grafik Garis (Pendapatan) ---
 function updateLineChart(trxs) {
     const ctx = document.getElementById('chartFlow');
-    if(!ctx) return;
+    if (!ctx) return;
 
     // Ambil 10 transaksi terakhir
     const dataPoints = trxs.slice(-10);
-    
-    if(window.lineChartInstance) window.lineChartInstance.destroy();
+
+    if (window.lineChartInstance) window.lineChartInstance.destroy();
 
     window.lineChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'line',
@@ -99,8 +99,8 @@ function updateLineChart(trxs) {
                 pointBorderColor: '#2A5C35'
             }]
         },
-        options: { 
-            responsive: true, 
+        options: {
+            responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
@@ -114,7 +114,7 @@ function updateLineChart(trxs) {
 // --- B. Update Grafik Donat (Kategori Terlaris) ---
 function updateCategoryChart(trxs) {
     const ctx = document.getElementById('chartRatio');
-    if(!ctx) return;
+    if (!ctx) return;
 
     // 1. Siapkan Counter
     let counts = { coffee: 0, 'non-coffee': 0, pastry: 0, other: 0 };
@@ -125,12 +125,12 @@ function updateCategoryChart(trxs) {
         // String item format: "Nama Barang (1), Nama Lain (2)"
         // Kita pecah string ini
         const itemStrings = t.items.split(', ');
-        
+
         itemStrings.forEach(str => {
             // Regex untuk ambil Nama dan Qty. Contoh: "Kopi Gayo (2)"
             // LastIndexOf '(' digunakan untuk memisah nama dan qty
             const splitIndex = str.lastIndexOf(' (');
-            
+
             if (splitIndex !== -1) {
                 const productName = str.substring(0, splitIndex).trim(); // "Kopi Gayo"
                 const qtyStr = str.substring(splitIndex + 2, str.length - 1); // "2"
@@ -138,7 +138,7 @@ function updateCategoryChart(trxs) {
 
                 // Cari kategori produk ini di database
                 const product = products.find(p => p.name === productName);
-                
+
                 if (product && counts[product.category] !== undefined) {
                     counts[product.category] += qty;
                 } else {
@@ -149,7 +149,7 @@ function updateCategoryChart(trxs) {
     });
 
     // 3. Update Chart
-    if(window.doughnutChartInstance) window.doughnutChartInstance.destroy();
+    if (window.doughnutChartInstance) window.doughnutChartInstance.destroy();
 
     window.doughnutChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'doughnut',
@@ -162,9 +162,9 @@ function updateCategoryChart(trxs) {
                 hoverOffset: 4
             }]
         },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false, 
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
             cutout: '75%',
             plugins: {
                 legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
@@ -178,16 +178,16 @@ function renderInventory() {
     const products = getProducts();
     const tbody = document.getElementById('inventoryTableBody');
     const badgeEl = document.getElementById('totalItemsBadge');
-    
-    if(badgeEl) badgeEl.innerText = products.length + " Item";
-    if(!tbody) return;
-    
+
+    if (badgeEl) badgeEl.innerText = products.length + " Item";
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
     products.forEach(item => {
         let badgeColor = "bg-gray-100 text-gray-600";
-        if(item.category === 'raw') badgeColor = "bg-orange-100 text-orange-700";
-        if(item.category === 'coffee') badgeColor = "bg-green-100 text-green-700";
+        if (item.category === 'raw') badgeColor = "bg-orange-100 text-orange-700";
+        if (item.category === 'coffee') badgeColor = "bg-green-100 text-green-700";
 
         // Cek stok menipis
         let stockDisplay = `<span class="font-bold">${item.stock}</span>`;
@@ -217,17 +217,17 @@ function handleAdProduct(e) {
 
     const products = getProducts();
     products.push({ id: Date.now(), name, category: cat, stock, price });
-    
-    localStorage.setItem('stigma_products', JSON.stringify(products));
+
+    localStorage.setItem('stigma_products_v5', JSON.stringify(products));
     renderInventory();
     e.target.reset();
     alert("Produk berhasil ditambahkan!");
 }
 
 function deleteProduct(id) {
-    if(confirm("Hapus item ini?")) {
+    if (confirm("Hapus item ini?")) {
         const products = getProducts().filter(p => p.id !== id);
-        localStorage.setItem('stigma_products', JSON.stringify(products));
+        localStorage.setItem('stigma_products_v5', JSON.stringify(products));
         renderInventory();
     }
 }
@@ -238,8 +238,8 @@ function renderReports() {
     const tbody = document.getElementById('reportTableBody');
     const totalEl = document.getElementById('reportTotalIncome');
     let totalIncome = 0;
-    
-    if(!tbody) return;
+
+    if (!tbody) return;
     tbody.innerHTML = '';
 
     if (trxs.length === 0) {
@@ -251,7 +251,7 @@ function renderReports() {
         totalIncome += t.total;
 
         // Format Item List agar rapi (List 1, 2, 3)
-        let rawItems = t.items.split(', '); 
+        let rawItems = t.items.split(', ');
         let itemListHtml = '<ol class="list-decimal list-inside space-y-1">';
         rawItems.forEach(item => {
             itemListHtml += `<li class="text-xs leading-relaxed">${item.trim()}</li>`;
@@ -272,7 +272,7 @@ function renderReports() {
         `;
     });
 
-    if(totalEl) totalEl.innerText = fmt(totalIncome);
+    if (totalEl) totalEl.innerText = fmt(totalIncome);
 }
 
 // INITIALIZATION
