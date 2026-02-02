@@ -1,2 +1,76 @@
-﻿# cafe-stigma-POS
+﻿# ☕ Cafe Stigma POS
+
+**Cafe Stigma POS** adalah aplikasi Point of Sales (Kasir) berbasis web modern yang dirancang untuk kafe. Aplikasi ini memiliki dua antarmuka utama: **Barista (Kasir)** untuk memproses pesanan dan **Owner (Admin)** untuk manajemen stok dan laporan keuangan.
+
+![Cafe Stigma POS](resource/login_bg.png)
+
+## ✨ Fitur Utama
+
+### 🖥️ POS Barista (Kasir)
+- **Katalog Menu Visual**: Tampilan menu grid yang menarik dengan gambar.
+- **Filtering Kategori**: Sortir menu berdasarkan Coffee, Non-Coffee, dan Pastry.
+- **Keranjang Belanja**: Tambah, kurangi, dan hapus item dengan mudah.
+- **Kalkulasi Otomatis**: Menghitung Subtotal, Pajak (10%), dan Total Bayar secara real-time.
+- **Checkout Sistem**: Mengurangi stok otomatis saat transaksi berhasil.
+
+### 👤 Owner Dashboard (Admin)
+- **Ringkasan Keuangan**: Melihat total pemasukan, pengeluaran, dan profit bersih.
+- **Grafik Analitik**: Visualisasi tren pendapatan dan kategori produk terlaris.
+- **Manajemen Inventaris**: 
+  - Tambah menu baru.
+  - Hapus menu.
+  - Monitoring stok (Indikator stok menipis).
+- **Laporan Transaksi**: Tabel riwayat transaksi lengkap dengan opsi Cetak Laporan (Print/PDF).
+
+## 🚀 Cara Menjalankan
+
+1.  **Clone Repository**
+    ```bash
+    git clone https://github.com/ALIIF28/cafe-stigma-POS.git
+    cd cafe-stigma-POS
+    ```
+
+2.  **Jalankan Server Lokal**
+    Anda bisa menggunakan ekstensi "Live Server" di VS Code atau Python:
+    ```bash
+    # Menggunakan Python
+    python -m http.server 8000
+    ```
+
+3.  **Buka di Browser**
+    Akses: `http://localhost:8000/login.html`
+
+## 🔑 Akun Demo
+
+Gunakan akun berikut untuk masuk ke dalam sistem:
+
+| Role | Username | Password |
+| :--- | :--- | :--- |
+| **Owner (Admin)** | `admin` | `123` |
+| **Barista (Kasir)** | `kasir` | `123` |
+
+## 🛠️ Teknologi yang Digunakan
+
+- **HTML5 & CSS3**
+- **JavaScript (Vanilla JS)** - Logic utama aplikasi.
+- **Tailwind CSS** - Framework CSS untuk styling modern.
+- **Chart.js** - Untuk grafik visualisasi data.
+- **Remix Icon** - Ikon antarmuka.
+- **LocalStorage** - Database client-side sederhana (tanpa backend server).
+
+## 📂 Struktur Folder
+
+```
+/
+├── index.html      # Halaman Utama Kasir (POS)
+├── owner.html      # Halaman Dashboard Owner
+├── login.html      # Halaman Login
+├── script.js       # Logika POS Barista
+├── owner.js        # Logika Dashboard Owner & Laporan
+├── auth.js         # Logika Autentikasi (Login/Logout)
+└── resource/       # Aset Gambar & Logo
+```
+
+---
+*Dibuat untuk Cafe Stigma - Brewing Culture.*
 
